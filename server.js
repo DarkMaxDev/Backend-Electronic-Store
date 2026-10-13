@@ -8,7 +8,20 @@ import order from './routes/order.routes.js';
 import user from './routes/user.routes.js';
 
 const app = express();
-app.use(cors({ origin: process.env.CLIENT_URL || true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    // Si no hay origen (como Postman) o si coincide (eliminando la barra final si la hubiera)
+    const allowedClient = (process.env.CLIENT_URL || '').replace(/\/$/, '');
+    const incomingOrigin = (origin || '').replace(/\/$/, '');
+
+    if (!origin || incomingOrigin === allowedClient || process.env.CLIENT_URL === 'true') {
+      callback(null, true);
+    } else {
+      callback(new Error('Bloqueado por CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json({ limit: '2mb' }));
 app.get('/api/health', (_, res) => res.json({ ok: true }));
 app.use('/api/auth', auth);
